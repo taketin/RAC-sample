@@ -9,8 +9,14 @@
 #import <libextobjc/EXTScope.h>
 #import "ViewController.h"
 #import "ReactiveCocoa.h"
+#import "RACSampleViewModel.h"
 
 @interface ViewController ()
+
+@property (weak, nonatomic) IBOutlet UITextField *usernameField;
+@property (weak, nonatomic) IBOutlet UITextField *passwordField;
+@property (weak, nonatomic) IBOutlet UITextField *passwordConfirmationField;
+@property (weak, nonatomic) IBOutlet UIButton *submitBtn;
 
 @end
 
@@ -20,58 +26,15 @@
 {
     [super viewDidLoad];
 
-    self.submitBtn.enabled = NO;
-    @weakify(self)
+    self.viewModel = [[RACSampleViewModel alloc] init];
 
-    RAC(self, usernameValid) =
-    [self.usernameField.rac_textSignal map:^(NSString *newName) {
-        return @(newName.length >= 4);
-    }];
-
-    [RACObserve(self, usernameValid) subscribeNext:^(NSNumber *isUsernameValid) {
-        @strongify(self)
-        if ([isUsernameValid boolValue]) {
-            self.usernameField.textColor = [UIColor blueColor];
-        } else {
-            self.usernameField.textColor = [UIColor grayColor];
-        }
-    }];
-
-    RAC(self, passwordValid) =
-    [RACSignal combineLatest:@[self.passwordField.rac_textSignal, self.passwordConfirmationField.rac_textSignal]
-                      reduce:^(NSString *password, NSString *passwordConfirmation) {
-                          return @(password.length >= 6 &&
-                                   passwordConfirmation.length >= 6 &&
-                                   [password isEqual:passwordConfirmation]);
-                      }];
-
-    [RACObserve(self, passwordValid) subscribeNext:^(NSNumber *isPasswordValid) {
-        @strongify(self)
-        if ([isPasswordValid boolValue]) {
-            self.passwordField.textColor = [UIColor blueColor];
-            self.passwordConfirmationField.textColor = [UIColor blueColor];
-        } else {
-            self.passwordField.textColor = [UIColor grayColor];
-            self.passwordConfirmationField.textColor = [UIColor grayColor];
-        }
-    }];
-
-    RAC(self.submitBtn, enabled) =
-    [RACSignal combineLatest:@[RACObserve(self, usernameValid), RACObserve(self, passwordValid)]
-                      reduce:^(NSNumber *isUsernameValid, NSNumber *isPasswordValid) {
-                          return @([isUsernameValid boolValue] && [isPasswordValid boolValue]);
-                      }];
-
-    [[self.submitBtn rac_signalForControlEvents:UIControlEventTouchUpInside] subscribeNext:^(UIButton *submitBtn) {
-        if (submitBtn.enabled) {
-            UIAlertView *alert = [[UIAlertView alloc] initWithTitle:@"Submitted"
-                                                            message:@""
-                                                           delegate:nil
-                                                  cancelButtonTitle:@"OK"
-                                                  otherButtonTitles:nil];
-            [alert show];
-        }
-    }];
+    RAC(self.viewModel, usernameValue) = self.usernameField.rac_textSignal;
+    RAC(self.viewModel, passwordValue) = self.passwordField.rac_textSignal;
+    RAC(self.viewModel, passwordConfirmationValue) = self.passwordConfirmationField.rac_textSignal;
+    RAC(self.usernameField, textColor) = RACObserve(self.viewModel, usernameTextColor);
+    RAC(self.passwordField, textColor) = RACObserve(self.viewModel, passwordTextColor);
+    RAC(self.passwordConfirmationField, textColor) = RACObserve(self.viewModel, passwordConfirmationTextColor);
+    self.submitBtn.rac_command = self.viewModel.submitCommand;
 }
 
 @end

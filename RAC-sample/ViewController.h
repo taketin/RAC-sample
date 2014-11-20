@@ -8,14 +8,11 @@
 
 #import <UIKit/UIKit.h>
 
+@class RACSampleViewModel;
+
 @interface ViewController : UIViewController <UITextFieldDelegate>
 
-@property (weak, nonatomic) IBOutlet UITextField *usernameField;
-@property (weak, nonatomic) IBOutlet UITextField *passwordField;
-@property (weak, nonatomic) IBOutlet UITextField *passwordConfirmationField;
-@property (weak, nonatomic) IBOutlet UIButton *submitBtn;
-@property (strong, nonatomic) NSNumber *usernameValid;
-@property (strong, nonatomic) NSNumber *passwordValid;
+@property (nonatomic, strong) RACSampleViewModel *viewModel;
 
 @end
 
